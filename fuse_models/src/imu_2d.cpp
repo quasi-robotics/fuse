@@ -119,7 +119,7 @@ void Imu2D::onStart()
     sub_ = rclcpp::create_subscription<sensor_msgs::msg::Imu>(
       interfaces_,
       params_.topic,
-      params_.queue_size,
+      rclcpp::SensorDataQoS().keep_last(params_.queue_size),
       std::bind(
         &ImuThrottledCallback::callback<const sensor_msgs::msg::Imu &>,
         &throttled_callback_,
