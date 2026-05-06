@@ -2,6 +2,14 @@
 Changelog for package fuse_models
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.2.6 (2026-05-06)
+------------------
+
+1.2.5 (2026-05-05)
+------------------
+* Fix tf2_ros header order
+* Contributors: Stephen Williams
+
 1.2.4 (2025-07-28)
 ------------------
 * Fix wrong `benchmark` target (`#418 <https://github.com/locusrobotics/fuse/issues/418>`_)

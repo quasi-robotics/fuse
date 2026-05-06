@@ -2,6 +2,14 @@
 Changelog for package fuse_variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.2.6 (2026-05-06)
+------------------
+* Starting with Boost 1.86, the boost::uuids::uuid class requires double braces for aggregate initialization from a list of bytes. Double-brace initialization works fine on older Boost versions as well.
+* Contributors: Stephen Williams
+
+1.2.5 (2026-05-05)
+------------------
+
 1.2.4 (2025-07-28)
 ------------------
 * Porting StampedVariableSynchronizer changes to ROS 2 (`#414 <https://github.com/locusrobotics/fuse/issues/414>`_)

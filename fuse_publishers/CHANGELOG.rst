@@ -2,6 +2,14 @@
 Changelog for package fuse_publishers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.2.6 (2026-05-06)
+------------------
+
+1.2.5 (2026-05-05)
+------------------
+* Fix tf2_ros header order
+* Contributors: Stephen Williams
+
 1.2.4 (2025-07-28)
 ------------------
 * Update headers for tf2_ros (`#417 <https://github.com/locusrobotics/fuse/issues/417>`_)
