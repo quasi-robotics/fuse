@@ -164,6 +164,13 @@ public:
         fuse_core::joinParameterName(ns, "twist_covariance_offset_diagonal"), 0.0);
     }
 
+    twist_covariance_scale =
+      fuse_core::getParam(
+      interfaces, fuse_core::joinParameterName(
+        ns,
+        "twist_covariance_scale"),
+      twist_covariance_scale);
+
     pose_loss =
       fuse_core::loadLossConfig(interfaces, fuse_core::joinParameterName(ns, "pose_loss"));
     linear_velocity_loss =
@@ -182,6 +189,8 @@ public:
   bool disable_checks {false};
   bool independent {true};
   bool use_twist_covariance {true};
+  double twist_covariance_scale {1.0};  //!< Multiplier applied to the incoming twist covariance
+                                        //!< (>1 de-weights this sensor relative to others)
   fuse_core::Matrix3d minimum_pose_relative_covariance;  //!< Minimum pose relative covariance
                                                          //!< matrix
   fuse_core::Matrix3d twist_covariance_offset;    //!< Offset already added to the twist covariance
