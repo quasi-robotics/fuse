@@ -154,6 +154,12 @@ void Odometry2D::process(const nav_msgs::msg::Odometry & msg)
   twist.header.frame_id = msg.child_frame_id;
   twist.twist = msg.twist;
 
+  if (params_.twist_covariance_scale != 1.0) {
+    for (auto & c : twist.twist.covariance) {
+      c *= params_.twist_covariance_scale;
+    }
+  }
+
   const bool validate = !params_.disable_checks;
 
   if (params_.differential) {
