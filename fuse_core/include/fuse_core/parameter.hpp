@@ -328,7 +328,12 @@ inline fuse_core::Loss::SharedPtr loadLossConfig(
   }
  
   auto loss = fuse_core::createUniqueLoss(loss_type);
-  loss->initialize(interfaces, interfaces.get_node_base_interface()->get_fully_qualified_name());
+  // initialize with the loss's own parameter namespace (e.g.
+  // "<sensor>.linear_velocity_loss") so per-loss parameters like "a" are read
+  // from the config; passing the node name here made every loss on the node
+  // read one shared, undeclarable "<node_name>.a" key and silently fall back
+  // to defaults
+  loss->initialize(interfaces, name);
 
   return loss;
 }
