@@ -92,6 +92,11 @@ public:
       throttle_use_wall_time);
 
     fuse_core::getParamRequired(interfaces, fuse_core::joinParameterName(ns, "topic"), topic);
+    topic2 = fuse_core::getParam(
+      interfaces, fuse_core::joinParameterName(
+        ns,
+        "topic2"),
+      topic2);
 
     velocity_threshold = fuse_core::getParam(
       interfaces, fuse_core::joinParameterName(
@@ -103,6 +108,24 @@ public:
         ns,
         "angular_threshold"),
       angular_threshold);
+    // The agreement topic thresholds default to the primary thresholds
+    velocity_threshold2 = velocity_threshold;
+    angular_threshold2 = angular_threshold;
+    velocity_threshold2 = fuse_core::getParam(
+      interfaces, fuse_core::joinParameterName(
+        ns,
+        "velocity_threshold2"),
+      velocity_threshold2);
+    angular_threshold2 = fuse_core::getParam(
+      interfaces, fuse_core::joinParameterName(
+        ns,
+        "angular_threshold2"),
+      angular_threshold2);
+    fuse_core::getPositiveParam(
+      interfaces, fuse_core::joinParameterName(
+        ns,
+        "topic2_timeout"), topic2_timeout,
+      false);
     velocity_sigma = fuse_core::getParam(
       interfaces, fuse_core::joinParameterName(
         ns,
@@ -126,10 +149,26 @@ public:
   bool throttle_use_wall_time {false};      //!< Whether to throttle using ros::WallTime or not
   std::string topic {};
 
+  //!< Optional second odometry topic that must agree the robot is stationary before ZUPT fires.
+  //!< Guards against a single degenerate odometry source (e.g. ICP in a featureless corridor)
+  //!< confidently reporting zero velocity while the robot is moving. Empty = single-topic mode.
+  std::string topic2 {};
+
   //!< The robot is considered stationary when the measured linear speed is below
   //!< velocity_threshold (m/s) AND the measured yaw rate is below angular_threshold (rad/s)
   double velocity_threshold {0.05};
   double angular_threshold {0.05};
+
+  //!< Stationarity thresholds for the agreement topic. Odometry sources have different noise
+  //!< levels, so the agreement topic can use looser/tighter values; they default to the primary
+  //!< thresholds when not set.
+  double velocity_threshold2 {0.05};
+  double angular_threshold2 {0.05};
+
+  //!< Maximum age of the newest topic2 sample, relative to the primary message stamp, for the
+  //!< agreement to count (seconds). If topic2 is configured but stale or never received, ZUPT
+  //!< does not fire: a missing confirmation reads as "not confirmed stationary".
+  rclcpp::Duration topic2_timeout {0, 500000000};  // 0.5 s
 
   //!< Noise applied to the zero-velocity pseudo-measurements. Tight values make the optimizer
   //!< strongly believe the robot is not moving while it is stationary.

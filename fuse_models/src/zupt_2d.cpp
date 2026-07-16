@@ -88,6 +88,9 @@ void Zupt2D::onInit()
 
 void Zupt2D::onStart()
 {
+  topic2_received_ = false;
+  last_topic2_stationary_ = false;
+
   rclcpp::SubscriptionOptions sub_options;
   sub_options.callback_group = cb_group_;
 
@@ -102,11 +105,22 @@ void Zupt2D::onStart()
     ),
     sub_options
   );
+
+  if (!params_.topic2.empty()) {
+    sub2_ = rclcpp::create_subscription<nav_msgs::msg::Odometry>(
+      interfaces_,
+      params_.topic2,
+      params_.queue_size,
+      std::bind(&Zupt2D::process2, this, std::placeholders::_1),
+      sub_options
+    );
+  }
 }
 
 void Zupt2D::onStop()
 {
   sub_.reset();
+  sub2_.reset();
 }
 
 void Zupt2D::process(const nav_msgs::msg::Odometry & msg)
@@ -119,6 +133,19 @@ void Zupt2D::process(const nav_msgs::msg::Odometry & msg)
 
   if (speed >= params_.velocity_threshold || yaw_rate >= params_.angular_threshold) {
     return;
+  }
+
+  // When an agreement topic is configured, a fresh sample from it must confirm stationarity.
+  // A stale or never-received topic2 blocks ZUPT rather than falling back to single-topic mode:
+  // a false zero-velocity constraint is far more damaging than a missed one.
+  if (!params_.topic2.empty()) {
+    if (!topic2_received_ || !last_topic2_stationary_) {
+      return;
+    }
+    const auto age = rclcpp::Time(msg.header.stamp) - last_topic2_stamp_;
+    if (std::abs(age.nanoseconds()) > params_.topic2_timeout.nanoseconds()) {
+      return;
+    }
   }
 
   // Create a transaction object
@@ -174,6 +201,17 @@ void Zupt2D::process(const nav_msgs::msg::Odometry & msg)
 
   // Send the transaction object to the plugin's parent
   sendTransaction(transaction);
+}
+
+void Zupt2D::process2(const nav_msgs::msg::Odometry & msg)
+{
+  const double speed = std::hypot(msg.twist.twist.linear.x, msg.twist.twist.linear.y);
+  const double yaw_rate = std::abs(msg.twist.twist.angular.z);
+
+  last_topic2_stamp_ = msg.header.stamp;
+  last_topic2_stationary_ =
+    speed < params_.velocity_threshold2 && yaw_rate < params_.angular_threshold2;
+  topic2_received_ = true;
 }
 
 }  // namespace fuse_models

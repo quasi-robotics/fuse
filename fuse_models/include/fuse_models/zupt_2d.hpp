@@ -71,6 +71,18 @@ namespace fuse_models
  *  - device_name (string) Used to generate the device/robot ID if the device_id is not provided
  *  - queue_size (int, default: 10) The subscriber queue size for the odometry messages
  *  - topic (string) The topic to which to subscribe for the odometry messages
+ *  - topic2 (string, default: "") Optional second odometry topic that must also report the robot
+ *                                 stationary before ZUPT fires. Guards against a single degenerate
+ *                                 odometry source (e.g. ICP in a featureless corridor) confidently
+ *                                 reporting zero velocity while the robot is moving. Empty
+ *                                 disables the agreement check
+ *  - velocity_threshold2 (double, default: velocity_threshold) Stationarity speed threshold (m/s)
+ *                                                              for topic2
+ *  - angular_threshold2 (double, default: angular_threshold) Stationarity yaw rate threshold
+ *                                                            (rad/s) for topic2
+ *  - topic2_timeout (double, default: 0.5) Maximum age (s) of the newest topic2 sample, relative
+ *                                          to the primary message stamp, for the agreement to
+ *                                          count. A stale or missing topic2 blocks ZUPT
  *  - velocity_threshold (double, default: 0.05) Measured linear speed (m/s) below which the robot
  *                                               may be considered stationary
  *  - angular_threshold (double, default: 0.05) Measured yaw rate (rad/s) below which the robot may
@@ -85,6 +97,7 @@ namespace fuse_models
  *
  * Subscribes:
  *  - \p topic (nav_msgs::msg::Odometry) Odometry used to detect that the robot is stationary
+ *  - \p topic2 (nav_msgs::msg::Odometry) Optional odometry that must agree with the detection
  */
 class Zupt2D : public fuse_core::AsyncSensorModel
 {
@@ -115,6 +128,12 @@ public:
    * @param[in] msg - The odometry message used to detect that the robot is stationary
    */
   void process(const nav_msgs::msg::Odometry & msg);
+
+  /**
+   * @brief Callback for the optional agreement odometry topic
+   * @param[in] msg - The odometry message used to confirm that the robot is stationary
+   */
+  void process2(const nav_msgs::msg::Odometry & msg);
 
 protected:
   fuse_core::UUID device_id_;  //!< The UUID of this device
@@ -154,6 +173,13 @@ protected:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub2_;
+
+  //!< Latest agreement-topic sample. Both subscriptions share the sensor model's mutually
+  //!< exclusive callback group, so callbacks are serialized and no locking is needed.
+  rclcpp::Time last_topic2_stamp_ {0, 0, RCL_ROS_TIME};
+  bool last_topic2_stationary_ {false};
+  bool topic2_received_ {false};
 
   using OdometryThrottledCallback = fuse_core::ThrottledMessageCallback<nav_msgs::msg::Odometry>;
   OdometryThrottledCallback throttled_callback_;
