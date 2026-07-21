@@ -150,7 +150,7 @@ void Zupt2D::process(const nav_msgs::msg::Odometry & msg)
 
   // Create a transaction object
   auto transaction = fuse_core::Transaction::make_shared();
-  transaction->stamp(msg.header.stamp);
+  transaction->stamp(clock_->now());
 
   // Assert [VX = 0, VY = 0, VYAW = 0] with tight noise. The zero pseudo-measurement is generated
   // directly in the odometry twist frame (the robot body frame), so no transform is required.
@@ -158,6 +158,7 @@ void Zupt2D::process(const nav_msgs::msg::Odometry & msg)
   // robot is stationary, so down-weighting it as an outlier would defeat its purpose.
   geometry_msgs::msg::TwistWithCovarianceStamped twist;
   twist.header = msg.header;
+  twist.header.stamp = transaction->stamp();  // stamp the pseudo-measurement with the current time, not the odometry time
   twist.twist.covariance[0] = params_.velocity_sigma * params_.velocity_sigma;
   twist.twist.covariance[7] = params_.velocity_sigma * params_.velocity_sigma;
   twist.twist.covariance[35] = params_.angular_sigma * params_.angular_sigma;
@@ -182,6 +183,7 @@ void Zupt2D::process(const nav_msgs::msg::Odometry & msg)
   if (params_.acceleration_sigma > 0.0) {
     geometry_msgs::msg::AccelWithCovarianceStamped accel;
     accel.header = msg.header;
+    accel.header.stamp = transaction->stamp();  // stamp the pseudo-measurement with the current time, not the odometry time
     accel.accel.covariance[0] = params_.acceleration_sigma * params_.acceleration_sigma;
     accel.accel.covariance[7] = params_.acceleration_sigma * params_.acceleration_sigma;
 
