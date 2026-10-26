@@ -296,7 +296,7 @@ void FixedLagSmoother::optimizationLoop()
         RCLCPP_WARN_STREAM_THROTTLE(
           logger_,
           *clock_,
-          10.0 * 1000,
+          60.0 * 1000,
           "Optimization exceeded the configured duration by "
             << (optimization_complete - optimization_deadline).nanoseconds() << "ns");
       }
