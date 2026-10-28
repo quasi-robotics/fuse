@@ -222,8 +222,8 @@ void Odometry2DPublisher::notifyCallback(
 
         latest_covariance_valid = true;
       } catch (const std::exception & e) {
-        RCLCPP_WARN_STREAM(
-          logger_,
+        RCLCPP_WARN_STREAM_THROTTLE(
+          logger_, *clock_, 10000,
           "An error occurred computing the covariance information for "
             << latest_stamp.nanoseconds()
             << ". The covariance will be set to zero.\n"
